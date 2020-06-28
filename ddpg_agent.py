@@ -1,3 +1,4 @@
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -36,17 +37,57 @@ class Agent:
         self.noise = OUNoise(action_size, seed = self.seed)
         self.buffer = ReplayBuffer(aciton_size, BUFFER_SIZE, BATCH_SIZE, seed = self.seed) 
 
-    def act(self, state):
-        pass
+    def act(self, stat, add_noise = True):
+        """returning actions from the current policy"""
+        states = torch.from_numpy(state).float().to(device)
+        self.actor_local.eval()
+        with torch.no_grad():
+            actions = self.actor_local(state).cpu().data.numpy()
+        self.actor_local.train()
+        if add_noise:
+            actions += self.noise.sample()
+        return np.cli  
 
-    def step(sefl):
-        pass
 
-    def learn(self):
-        pass
+
+    def step(sefl, state, action, reward, next_state, done ):
+        """saves experiences in buffer and learn"""
+        self.buffer.add(state, action, reward, next_state, done)
+        if len(self.buffer) > BATCH_SIZE:
+            experiences = self.buffer.sample()
+            self.learn(experiences, GAMMA)
+
+        
+
+    def learn(self, experiences, gamma):
+        """updates policy and value networks given a batch of experiences"""
+        states, actions, rewards, next_states, dones = experiences
+
+        #updating Critic_local
+        next_actions  = self.actor_target(next_states)
+        next_Q_target = self.critic_target(next_states, next_actions)
+        Q_target = rewards + gamma*(1-dones)*next_Q_target
+        Q_expected = self.critic_local(states, actions)
+        critic_loss = F.mse_loss(Q_target, Q_expected)
+        self.critic_optim.zero_grad()
+        critic_loss.backward()
+        self.critic_optim.step()
+
+
+        #updating Actor_local
+        next_actions = self.actor_local(states)
+        actor_loss = - self.critic_local(states, next_actions)
+        self.actor_optim.zero_grad()
+        actor_loss.backward()
+        self.actor_optim.step()
     
-    def soft_update(self):
-        pass
+        self.soft_update(self.actor_local, self.actor_target, tau)
+        self.soft_update(self.critic_local, self.critic_target, tau)    
+    def soft_update(self, local_network, target_network, tau):
+        """updates target network using polyak averaging"""
+        for local_parameter, target_parameter in zip(local_network.parameters(), target_network.parameters()):
+            target_parameter.data.copy_((1.0-tau)*local_parameter+tau*target_parameter)
+        
 
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
@@ -78,15 +119,8 @@ class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""
 
     def __init__(self, action_size, buffer_size, batch_size, seed):
-        """Initialize a ReplayBuffer object.
+        """Initialize a ReplayBuffer object."""
 
-        Params
-        ======
-            action_size (int): dimension of each action
-            buffer_size (int): maximum size of buffer
-            batch_size (int): size of each training batch
-            seed (int): random seed
-        """
         self.action_size = action_size
         self.memory = deque(maxlen=buffer_size)
         self.batch_size = batch_size
