@@ -22,7 +22,7 @@ class Actor(nn.Module):
         x = F.relu(x)
         x = self.fc3(x)
         x = F.relu(x)
-        return F.softmax()
+        return F.tanh(self.fc4(x))
 
 class Critic(nn.Module):
     def __init__(self, state_size, action_size, seed, fc1_units =  256, fc2_units = 128, fc3_units = 32):
