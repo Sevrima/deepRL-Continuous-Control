@@ -9,12 +9,12 @@ import random
 import copy
 from collections import namedtuple, deque
 
-BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 64         # minibatch size
+BUFFER_SIZE = int(1e6)  # replay buffer size
+BATCH_SIZE = 128         # minibatch size
 GAMMA = 0.90            # discount factor
-TAU = 1e-3              # for soft update of target parameters
-LR_ACTOR = 5e-4               
-LR_CRITIC = 5e-4        
+TAU = .999              # for soft update of target parameters
+LR_ACTOR = 1e-4               
+LR_CRITIC = 1e-4        
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -25,7 +25,7 @@ class Agent:
         """Initializing the agent"""
         self.state_size = state_size
         self.action_size = action_size
-        self.seed = seed
+        self.seed = random.seed(seed)
 
         self.actor_local = Actor(state_size, action_size).to(device)
         self.actor_target = Actor(state_size, action_size).to(device)
@@ -33,7 +33,7 @@ class Agent:
 
         self.critic_local = Critic(state_size, action_size).to(device)
         self.critic_target = Critic(state_size, action_size).to(device)
-        self.critic_optim = optim.Adam( self.actor_local.parameters(), lr = LR_CRITIC)
+        self.critic_optim = optim.Adam( self.critic_local.parameters(), lr = LR_CRITIC)
 
 
         self.noise = OUNoise(action_size, seed = self.seed)
@@ -49,6 +49,9 @@ class Agent:
         if add_noise:
             actions += self.noise.sample()
         return np.clip(actions,-1,+1)
+    
+    def reset(self):
+        self.noise.reset()
 
     def save(self, state, action, reward, next_state, done ):
         """saves experiences in buffer"""
