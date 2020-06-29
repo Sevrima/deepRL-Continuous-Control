@@ -4,11 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Actor(nn.Module):
-    def __init__(self, state_size, action_size, seed, fc1_units =  256, fc2_units = 256, fc3_units = 64):
-        super(Actor, self).__init__()
-        self.seed = torch.manual_seed(seed)
-        
-        
+    def __init__(self, state_size, action_size, fc1_units =  256, fc2_units = 256, fc3_units = 64):
+        super().__init__()
+
         
         self.fc1 = nn.Linear(state_size, fc1_units)
         self.fc2 = nn.Linear(fc1_units, fc2_units)
@@ -24,9 +22,12 @@ class Actor(nn.Module):
         x = F.relu(x)
         return F.tanh(self.fc4(x))
 
+
+
+
 class Critic(nn.Module):
-    def __init__(self, state_size, action_size, seed, fc1_units =  256, fc2_units = 128, fc3_units = 32):
-        super(Critic, self).__init__()
+    def __init__(self, state_size, action_size, fc1_units =  256, fc2_units = 128, fc3_units = 32):
+        super().__init__()
 
         self.fc1 = nn.Linear(state_size+action_size, fc1_units)
         self.fc2 = nn.Linear(fc1_units, fc2_units)

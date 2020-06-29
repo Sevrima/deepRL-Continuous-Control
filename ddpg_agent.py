@@ -5,14 +5,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from model import Actor, Critic
+import random
+import copy
+from collections import namedtuple, deque
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 64         # minibatch size
 GAMMA = 0.90            # discount factor
 TAU = 1e-3              # for soft update of target parameters
-LR_actor = 5e-4               
-LR_critic = 5e-4
-UPDATE_EVERY = 4        # how often to update the network
+LR_ACTOR = 5e-4               
+LR_CRITIC = 5e-4        
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -25,21 +27,21 @@ class Agent:
         self.action_size = action_size
         self.seed = seed
 
-        self.actor_local = Actor(state_size, action_size)
-        self.actor_target = Actor(state_size, action_size)
-        self.actor_optim = optim.Adam(self.actor_local.parameters, lr = LR_actor)
+        self.actor_local = Actor(state_size, action_size).to(device)
+        self.actor_target = Actor(state_size, action_size).to(device)
+        self.actor_optim = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
-        self.critic_local = Critic(state_size, action_size)
-        self.critic_target = Critic(state_size, action_size)
-        self.critic_optim = optim.Adam(self.actor_local.parameters, lr = LR_critic)
+        self.critic_local = Critic(state_size, action_size).to(device)
+        self.critic_target = Critic(state_size, action_size).to(device)
+        self.critic_optim = optim.Adam( self.actor_local.parameters(), lr = LR_CRITIC)
 
 
         self.noise = OUNoise(action_size, seed = self.seed)
-        self.buffer = ReplayBuffer(aciton_size, BUFFER_SIZE, BATCH_SIZE, seed = self.seed) 
+        self.buffer = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, seed = self.seed) 
 
-    def act(self, stat, add_noise = True):
+    def act(self, state, add_noise = True):
         """returning actions from the current policy"""
-        states = torch.from_numpy(state).float().to(device)
+        state = torch.from_numpy(state).float().to(device)
         self.actor_local.eval()
         with torch.no_grad():
             actions = self.actor_local(state).cpu().data.numpy()
@@ -48,9 +50,7 @@ class Agent:
             actions += self.noise.sample()
         return np.cli  
 
-
-
-    def step(sefl, state, action, reward, next_state, done ):
+    def step(slef, state, action, reward, next_state, done ):
         """saves experiences in buffer and learn"""
         self.buffer.add(state, action, reward, next_state, done)
         if len(self.buffer) > BATCH_SIZE:
@@ -146,4 +146,4 @@ class ReplayBuffer:
 
     def __len__(self):
         """Return the current size of internal memory."""
-        return len(self.memory)s
+        return len(self.memory)
