@@ -20,7 +20,7 @@ class Actor(nn.Module):
         x = F.relu(x)
         x = self.fc3(x)
         x = F.relu(x)
-        return F.tanh(self.fc4(x))
+        return torch.tanh(self.fc4(x))
 
 
 
@@ -35,7 +35,9 @@ class Critic(nn.Module):
         self.fc4 = nn.Linear(fc3_units, 1)
 
     def forward(self, state,action):
-        x = self.fc1(torch.cat([state,action]))
+        x = torch.cat([state.float(), action.float()], 1)
+        # x = state+action
+        x = self.fc1(x.float())
         x = F.relu(x)
         x = self.fc2(x)
         x = F.relu(x)

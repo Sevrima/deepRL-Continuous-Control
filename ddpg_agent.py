@@ -48,11 +48,14 @@ class Agent:
         self.actor_local.train()
         if add_noise:
             actions += self.noise.sample()
-        return np.cli  
+        return np.clip(actions,-1,+1)
 
-    def step(slef, state, action, reward, next_state, done ):
-        """saves experiences in buffer and learn"""
+    def save(self, state, action, reward, next_state, done ):
+        """saves experiences in buffer"""
         self.buffer.add(state, action, reward, next_state, done)
+    
+    def start_learn(self):
+        """calls the learn method"""    
         if len(self.buffer) > BATCH_SIZE:
             experiences = self.buffer.sample()
             self.learn(experiences, GAMMA)
@@ -76,13 +79,14 @@ class Agent:
 
         #updating Actor_local
         next_actions = self.actor_local(states)
-        actor_loss = - self.critic_local(states, next_actions)
+        actor_loss = - self.critic_local(states, next_actions).mean()
         self.actor_optim.zero_grad()
         actor_loss.backward()
         self.actor_optim.step()
     
-        self.soft_update(self.actor_local, self.actor_target, tau)
-        self.soft_update(self.critic_local, self.critic_target, tau)    
+        self.soft_update(self.actor_local, self.actor_target, TAU)
+        self.soft_update(self.critic_local, self.critic_target, TAU)    
+
     def soft_update(self, local_network, target_network, tau):
         """updates target network using polyak averaging"""
         for local_parameter, target_parameter in zip(local_network.parameters(), target_network.parameters()):
