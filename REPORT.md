@@ -56,6 +56,7 @@ Here is also a video showing performance of agent in environment v1:
 <div align="center">
 	<img src="images/vid.gif" width=500px>
 </div> 
+
 ### 4- Future works to improve the agent:
 - Testing other algorithms (such as A3C and PPO) as they might result in a better performance.
 - Further turing hyperparameters and actor/critic networks.
